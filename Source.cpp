@@ -12,9 +12,15 @@ vec4 points[RESOLUTION + 1][RESOLUTION + 1];
 point4 vertices[NUM_VERTICES];
 int Index;
 color4 colors[NUM_VERTICES];
+
 mat4 coefficients;
 
 mat4 projectionMatrix;
+mat4 modelViewMatrix;
+
+double globalRotateX;
+double globalRotateY;
+double globalRotateZ;
 
 mat4 knobs[3] = {
 	mat4(
@@ -30,10 +36,10 @@ mat4 knobs[3] = {
 		0.9, 0.6, -0.6, -0.9
 	),
 	mat4(
-		0.0, 0.0, 0.0, 0.0,
-		0.0, 0.0, 0.0, 0.0, 
-		0.0, 0.0, 0.0, 0.0, 
-		0.0, 0.0, 0.0, 0.0
+		1.0, 0.0, 0.0, 0.0,
+		0.5, 0.0, 0.5, 0.0, 
+		0.2, 0.0, 0.0, 0.0, 
+		0.4, 0.0, 0.0, 0.0
 	)
 };
 
@@ -120,7 +126,9 @@ void writeSurfaceToBuffer(vec4 points[RESOLUTION+1][RESOLUTION+1]) {
 }
 
 void init() {
-	projectionMatrix = Ortho(-0.5, 0.5, -2.0, 2.0, -1.0, 1.0);
+	projectionMatrix = Ortho(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
+
+	modelViewMatrix = RotateX(globalRotateX)*RotateY(globalRotateY)*RotateZ(globalRotateZ);
 
 	createPatchInDimension(knobs);
 
@@ -151,6 +159,9 @@ void init() {
 
 	GLuint vProjection = glGetUniformLocation(program, "vProjection");
 	glUniformMatrix4fv(vProjection, 1, false, projectionMatrix);
+
+	GLuint vModelView = glGetUniformLocation(program, "vModelView");
+	glUniformMatrix4fv(vModelView, 1, false, modelViewMatrix);
 	
 	glClearColor(1.0, 0.0, 1.0, 1.0);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
