@@ -116,6 +116,58 @@ void writeSurfaceToBuffer(vec4 points[RESOLUTION+1][RESOLUTION+1]) {
 
 }
 
+void setShading(int type) {
+	if (type == Wireframe) {
+		glUseProgram(programWireframe);
+		gDrawArraysType = GL_LINES;
+		glUniform1i(fShadingType, 1);
+	}
+	else if (type == Gouroud) {
+		glUseProgram(programGouroud);
+		gDrawArraysType = GL_TRIANGLES;
+		glUniform1i(fShadingType, 1);
+	}
+	else if (type == Phong) {
+		glUseProgram(programPhong);
+		gDrawArraysType = GL_TRIANGLES;
+		glUniform1i(fShadingType, 0);
+	}
+}
+
+void loadProgram(GLuint &program, const char *vertexshader, const char *fragmentshader) {
+	program = InitShader(vertexshader, fragmentshader);
+
+	GLuint vPosition = glGetAttribLocation(program, "vPosition");
+	glEnableVertexAttribArray(vPosition);
+	glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
+
+	GLuint vNormal = glGetAttribLocation(program, "vNormal");
+	glEnableVertexAttribArray(vNormal);
+	glVertexAttribPointer(vNormal, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(vertices)));
+
+	GLuint vProjection = glGetUniformLocation(program, "vProjection");
+	glUniformMatrix4fv(vProjection, 1, false, projectionMatrix);
+
+	GLuint vModelView = glGetUniformLocation(program, "vModelView");
+
+	glUniformMatrix4fv(vModelView, 1, false, modelViewMatrix);
+
+	GLuint vLightAmbient = glGetUniformLocation(program, "vLightAmbient");
+	glUniform4fv(vLightAmbient, 1, light_ambient);
+
+	GLuint vLightDiffuse = glGetUniformLocation(program, "vLightDiffuse");
+	glUniform4fv(vLightDiffuse, 1, light_diffuse);
+
+	GLuint vLightSpecular = glGetUniformLocation(program, "vLightSpecular");
+	glUniform4fv(vLightSpecular, 1, light_specular);
+	glGetUniformfv(program, vLightDiffuse, light_ambient);
+	debugVector(light_ambient);
+
+	GLuint vLightPosition = glGetUniformLocation(program, "vLightPosition");
+	glUniform4fv(vLightPosition, 1, light_position);
+
+}
+
 void init() {
 	projectionMatrix = Ortho(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
 
@@ -137,46 +189,16 @@ void init() {
 	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
 	glBufferSubData(GL_ARRAY_BUFFER, sizeof(vertices), sizeof(vNormals), vNormals);
 
-	GLuint program = InitShader("vshader.glsl", "fshader.glsl");
-	glUseProgram(program);
+	loadProgram(programGouroud, "vshaderG.glsl", "fshaderG.glsl");
+	loadProgram(programWireframe, "vshaderW.glsl", "fshaderW.glsl");
+	loadProgram(programPhong, "vshaderP.glsl", "fshaderP.glsl");
 
-	GLuint vPosition = glGetAttribLocation(program, "vPosition");
-	glEnableVertexAttribArray(vPosition);
-	glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
 
-	GLuint vNormal = glGetAttribLocation(program, "vNormal");
-	glEnableVertexAttribArray(vNormal);
-	glVertexAttribPointer(vNormal, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(vertices)));
-
-	GLuint vProjection = glGetUniformLocation(program, "vProjection");
-	printf("%d\n", vProjection);
-	glUniformMatrix4fv(vProjection, 1, false, projectionMatrix);
-
-	GLuint vModelView = glGetUniformLocation(program, "vModelView");
-
-	printf("%d\n", vModelView);
-	glUniformMatrix4fv(vModelView, 1, false, modelViewMatrix);
-
-	GLuint vLightAmbient = glGetUniformLocation(program, "vLightAmbient");
-	printf("%d\n", vLightAmbient);
-	glUniform4fv(vLightAmbient, 1, light_ambient);
-
-	GLuint vLightDiffuse = glGetUniformLocation(program, "vLightDiffuse");
-	printf("%d\n", vLightDiffuse);
-	glUniform4fv(vLightDiffuse, 1, light_diffuse);
-
-	GLuint vLightSpecular = glGetUniformLocation(program, "vLightSpecular");
-	printf("%d\n", vLightSpecular);
-	glUniform4fv(vLightSpecular, 1, light_specular);
-	glGetUniformfv(program, vLightDiffuse, light_ambient);
-	debugVector(light_ambient);
-
-	GLuint vLightPosition = glGetUniformLocation(program, "vLightPosition");
-	glUniform4fv(vLightPosition, 1, light_position);
 	
 	glClearColor(1.0, 0.0, 1.0, 1.0);
 	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
+	setShading(Wireframe);
 
 
 
@@ -184,13 +206,19 @@ void init() {
 
 void display() {
 
+
 	glClearColor(1.0, 1.0, 1.0, 1.0);
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-	glDrawArrays(GL_TRIANGLES, 0, Index);
+	glDrawArrays(gDrawArraysType, 0, Index);
 
 	glutSwapBuffers();
+}
+
+void rightClickMenu(int id) {
+	setShading(id);
+	glutPostRedisplay();
 }
 
 int main(int argc, char **argv) {
@@ -199,13 +227,20 @@ int main(int argc, char **argv) {
 
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DOUBLE | GLUT_DEPTH);
 
-	glutInitWindowSize(512, 512);
+	glutInitWindowSize(1000, 1000);
 
 	glutInitContextVersion(3, 2);
 
 	glutInitContextProfile(GLUT_CORE_PROFILE);
 
 	glutCreateWindow("Test Window");
+
+	glutCreateMenu(rightClickMenu);
+	glutAddMenuEntry("Wireframe", Wireframe);
+	glutAddMenuEntry("Gouroud", Gouroud);
+	glutAddMenuEntry("Phong", Phong);
+	glutAttachMenu(GLUT_RIGHT_BUTTON);
+
 
 	glewExperimental = GL_TRUE;
 

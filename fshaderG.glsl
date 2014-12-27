@@ -6,6 +6,7 @@ out vec4 fColor;
 void main() 
 { 
 	//No fragment processing simply output the interpolated vertex color.
-    fColor = color;
+	fColor = color;
+
 }
 
