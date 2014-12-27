@@ -1,47 +1,4 @@
-#include "Angel.h"
-#define NUM_VERTICES 5000
-#define WIN_W glutGet(GLUT_WINDOW_WIDTH)
-#define WIN_H glutGet(GLUT_WINDOW_HEIGHT)
-
-#define NUM_CURVES 5000
-#define RESOLUTION 20
-typedef Angel::vec4 color4;
-typedef Angel::vec4 point4;
-
-vec4 points[RESOLUTION + 1][RESOLUTION + 1];
-point4 vertices[NUM_VERTICES];
-int Index;
-color4 colors[NUM_VERTICES];
-
-mat4 coefficients;
-
-mat4 projectionMatrix;
-mat4 modelViewMatrix;
-
-double globalRotateX;
-double globalRotateY;
-double globalRotateZ;
-
-mat4 knobs[3] = {
-	mat4(
-		-0.9, -0.9, -0.9, -0.9,
-		-0.3, -0.3, -0.3, -0.3,
-		0.3, 0.3, 0.3, 0.3,
-		0.9, 0.9, 0.9, 0.9
-	),
-	mat4(
-		0.9, 0.6, -0.6, -0.9,
-		0.9, 0.6, -0.6, -0.9,
-		0.9, 0.6, -0.6, -0.9,
-		0.9, 0.6, -0.6, -0.9
-	),
-	mat4(
-		1.0, 0.0, 0.0, 0.0,
-		0.5, 0.0, 0.5, 0.0, 
-		0.2, 0.0, 0.0, 0.0, 
-		0.4, 0.0, 0.0, 0.0
-	)
-};
+#include "Source.h"
 
 void debugMatrix(mat4 matrix) {
 	for (int i = 0; i < 4; i++) {
@@ -51,12 +8,6 @@ void debugMatrix(mat4 matrix) {
 		}
 		printf("\n");
 	}
-}
-
-void createPoint(point4 point) {
-	vertices[Index] = point;
-	Index++;
-
 }
 
 void writeToBuffer(mat4 &mm) {
@@ -112,17 +63,57 @@ void createPatchInDimension(mat4 knobs[]) {
 	
 }
 
+vec4 getNormalVector(vec4 v1, vec4 v2, vec4 v3) {
+	return normalize(cross(v3 - v2, v2 - v1));
+}
+
 void writeSurfaceToBuffer(vec4 points[RESOLUTION+1][RESOLUTION+1]) {
 	for (int i = 0; i < RESOLUTION; i++) {
 		for (int j = 0; j < RESOLUTION; j++) {
 			vertices[Index] = points[i][j]; Index++;
-			vertices[Index] = points[i][j+1]; Index++;
 			vertices[Index] = points[i+1][j]; Index++;
+			vertices[Index] = points[i][j+1]; Index++;
+			
+			vec4 normal1 = getNormalVector(vertices[Index-3],vertices[Index-2],vertices[Index-1]);
+			normals[i][j][normalIndexes[i][j]++] = normal1;
+			normals[i+1][j][normalIndexes[i+1][j]++] = normal1;
+			normals[i][j+1][normalIndexes[i][j+1]++] = normal1;
+
+
 			vertices[Index] = points[i][j+1]; Index++;
 			vertices[Index] = points[i+1][j]; Index++;
 			vertices[Index] = points[i+1][j+1]; Index++;
+
+			vec4 normal2 = getNormalVector(vertices[Index - 3], vertices[Index - 2], vertices[Index - 1]);
+			normals[i][j+1][normalIndexes[i][j+1]++] = normal2;
+			normals[i+1][j][normalIndexes[i+1][j]++] = normal2;
+			normals[i+1][j+1][normalIndexes[i+1][j+1]++] = normal2;
+
 		}
 	}
+	Index = 0;
+	for (int i = 0; i <= RESOLUTION; i++) {
+		for (int j = 0; j <= RESOLUTION; j++) {
+			for (int k = 0; k < normalIndexes[i][j]; k++) {
+				averageNormals[i][j] += normals[i][j][k];
+			}
+			averageNormals[i][j] = averageNormals[i][j] / normalIndexes[i][j];
+		}
+	}
+	for (int i = 0; i <= RESOLUTION; i++) {
+		for (int j = 0; j <= RESOLUTION; j++) {
+
+			vNormals[Index] = averageNormals[i][j]; Index++;
+			vNormals[Index] = averageNormals[i + 1][j]; Index++;
+			vNormals[Index] = averageNormals[i][j + 1]; Index++;
+
+			vNormals[Index] = averageNormals[i][j + 1]; Index++;
+			vNormals[Index] = averageNormals[i + 1][j]; Index++;
+			vNormals[Index] = averageNormals[i + 1][j + 1]; Index++;
+
+		}
+	}
+
 }
 
 void init() {
@@ -142,9 +133,9 @@ void init() {
 	GLuint buffer;
 	glGenBuffers(1, &buffer);
 	glBindBuffer(GL_ARRAY_BUFFER, buffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices) + sizeof(colors), NULL, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices) + sizeof(vNormals), NULL, GL_STATIC_DRAW);
 	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
-	glBufferSubData(GL_ARRAY_BUFFER, sizeof(vertices), sizeof(colors), colors);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(vertices), sizeof(vNormals), vNormals);
 
 	GLuint program = InitShader("vshader.glsl", "fshader.glsl");
 	glUseProgram(program);
@@ -153,18 +144,38 @@ void init() {
 	glEnableVertexAttribArray(vPosition);
 	glVertexAttribPointer(vPosition, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(0));
 
-	GLuint vColor = glGetAttribLocation(program, "vColor");
-	glEnableVertexAttribArray(vColor);
-	glVertexAttribPointer(vColor, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(vertices)));
+	GLuint vNormal = glGetAttribLocation(program, "vNormal");
+	glEnableVertexAttribArray(vNormal);
+	glVertexAttribPointer(vNormal, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(vertices)));
 
 	GLuint vProjection = glGetUniformLocation(program, "vProjection");
+	printf("%d\n", vProjection);
 	glUniformMatrix4fv(vProjection, 1, false, projectionMatrix);
 
 	GLuint vModelView = glGetUniformLocation(program, "vModelView");
+
+	printf("%d\n", vModelView);
 	glUniformMatrix4fv(vModelView, 1, false, modelViewMatrix);
+
+	GLuint vLightAmbient = glGetUniformLocation(program, "vLightAmbient");
+	printf("%d\n", vLightAmbient);
+	glUniform4fv(vLightAmbient, 1, light_ambient);
+
+	GLuint vLightDiffuse = glGetUniformLocation(program, "vLightDiffuse");
+	printf("%d\n", vLightDiffuse);
+	glUniform4fv(vLightDiffuse, 1, light_diffuse);
+
+	GLuint vLightSpecular = glGetUniformLocation(program, "vLightSpecular");
+	printf("%d\n", vLightSpecular);
+	glUniform4fv(vLightSpecular, 1, light_specular);
+	glGetUniformfv(program, vLightDiffuse, light_ambient);
+	debugVector(light_ambient);
+
+	GLuint vLightPosition = glGetUniformLocation(program, "vLightPosition");
+	glUniform4fv(vLightPosition, 1, light_position);
 	
 	glClearColor(1.0, 0.0, 1.0, 1.0);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
 
 
