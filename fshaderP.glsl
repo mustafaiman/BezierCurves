@@ -13,7 +13,7 @@ out vec4 fColor;
 void main() 
 { 
 
-	float Shininess = 1.0;
+	float Shininess = 120.0;
 
 	vec3 NN = normalize(N);
 	vec3 LL = normalize(L);

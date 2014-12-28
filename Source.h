@@ -1,9 +1,9 @@
 #include "Angel.h"
 
-#define NUM_VERTICES 10000
+#define NUM_VERTICES 100000
 #define WIN_W glutGet(GLUT_WINDOW_WIDTH)
 #define WIN_H glutGet(GLUT_WINDOW_HEIGHT)
-#define RESOLUTION 30
+#define RESOLUTION 50
 #define DIFF 0.05
 
 enum Shading {
@@ -35,11 +35,11 @@ double globalRotateY = 0.0;
 double globalRotateZ = 0.0;
 
 
-vec4 light_ambient(0.5, 0.0, 0.0, 1.0);
-vec4 light_specular(0.4, 0.4, 0.4, 1.0);
-vec4 light_diffuse(0.5, 0.0, 0.0, 1.0);
+vec4 light_ambient(0.02, 0.02, 0.02, 1.0);
+vec4 light_specular(1.0, 1.0, 1.0, 1.0);
+vec4 light_diffuse(0.23, 0.23, 0.23, 1.0);
 
-vec4 light_position(0.0, 5.0, 0.0, 1.0);
+vec4 light_position(0.0, 5.0, 0.0, 0.0);
 
 mat4 knobs[3] = {
 	mat4(

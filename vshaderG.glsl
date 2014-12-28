@@ -14,7 +14,7 @@ out vec4 color;
 void main() 
 {
 
-	float Shininess = 1.0;
+	float Shininess = 120.0;
 
 	gl_Position = vProjection*vModelView*vPosition;
 
@@ -26,7 +26,7 @@ void main()
 	vec3 H = normalize( L + E );
 
 	// Transform vertex normal into eye coordinates
-	vec3 N = normalize( vModelView*vec4(vNormal.xyz, 1.0) ).xyz;
+	vec3 N = normalize( vModelView*vec4(vNormal.xyz, 0.0) ).xyz;
 
 	// Compute terms in the illumination equation
 	vec4 ambient = vLightAmbient;

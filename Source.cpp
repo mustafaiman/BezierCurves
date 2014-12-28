@@ -101,8 +101,8 @@ void writeSurfaceToBuffer(vec4 points[RESOLUTION+1][RESOLUTION+1]) {
 			averageNormals[i][j] = averageNormals[i][j] / normalIndexes[i][j];
 		}
 	}
-	for (int i = 0; i <= RESOLUTION; i++) {
-		for (int j = 0; j <= RESOLUTION; j++) {
+	for (int i = 0; i < RESOLUTION; i++) {
+		for (int j = 0; j < RESOLUTION; j++) {
 
 			vNormals[Index] = averageNormals[i][j]; Index++;
 			vNormals[Index] = averageNormals[i + 1][j]; Index++;
