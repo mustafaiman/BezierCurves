@@ -118,19 +118,22 @@ void writeSurfaceToBuffer(vec4 points[RESOLUTION+1][RESOLUTION+1]) {
 
 void setShading(int type) {
 	if (type == Wireframe) {
+		activeProgram = programWireframe;
+		shadingModel = Wireframe;
 		glUseProgram(programWireframe);
 		gDrawArraysType = GL_LINES;
-		glUniform1i(fShadingType, 1);
 	}
 	else if (type == Gouroud) {
+		activeProgram = programGouroud;
+		shadingModel = Gouroud;
 		glUseProgram(programGouroud);
 		gDrawArraysType = GL_TRIANGLES;
-		glUniform1i(fShadingType, 1);
 	}
 	else if (type == Phong) {
+		activeProgram = programPhong;
+		shadingModel = Phong;
 		glUseProgram(programPhong);
 		gDrawArraysType = GL_TRIANGLES;
-		glUniform1i(fShadingType, 0);
 	}
 }
 
@@ -148,9 +151,7 @@ void loadProgram(GLuint &program, const char *vertexshader, const char *fragment
 	GLuint vProjection = glGetUniformLocation(program, "vProjection");
 	glUniformMatrix4fv(vProjection, 1, false, projectionMatrix);
 
-	GLuint vModelView = glGetUniformLocation(program, "vModelView");
 
-	glUniformMatrix4fv(vModelView, 1, false, modelViewMatrix);
 
 	GLuint vLightAmbient = glGetUniformLocation(program, "vLightAmbient");
 	glUniform4fv(vLightAmbient, 1, light_ambient);
@@ -168,15 +169,24 @@ void loadProgram(GLuint &program, const char *vertexshader, const char *fragment
 
 }
 
-void init() {
-	projectionMatrix = Ortho(-1.0, 1.0, -1.0, 1.0, -1.0, 1.0);
+void writeKnobsToBuffer() {
+	knobIndex = Index;
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			vertices[knobIndex++] = vec4(knobs[0][i][j], knobs[2][i][j], knobs[2][i][j], 1.0);
+		}
+	}
+}
 
-	modelViewMatrix = RotateX(globalRotateX)*RotateY(globalRotateY)*RotateZ(globalRotateZ);
+void init() {
+	projectionMatrix = Ortho(-1.0, 1.0, -1.0, 1.0, -2.0, 2.0);
+
 
 	createPatchInDimension(knobs);
 
 	writeSurfaceToBuffer(points);
 
+	writeKnobsToBuffer();
 
 	GLuint vao;
 	glGenVertexArrays(1, &vao);
@@ -207,11 +217,21 @@ void init() {
 void display() {
 
 
+	vModelView = glGetUniformLocation(activeProgram, "vModelView");
+	modelViewMatrix = RotateX(globalRotateX)*RotateY(globalRotateY);
+	glUniformMatrix4fv(vModelView, 1, false, modelViewMatrix);
+
 	glClearColor(1.0, 1.0, 1.0, 1.0);
 
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 	glDrawArrays(gDrawArraysType, 0, Index);
+
+	/*
+	if (shadingModel == Wireframe) {
+		glEnable(GL_PROGRAM_POINT_SIZE);
+		glDrawArrays(GL_POINTS, Index, knobIndex-Index);
+	}*/
 
 	glutSwapBuffers();
 }
@@ -219,6 +239,40 @@ void display() {
 void rightClickMenu(int id) {
 	setShading(id);
 	glutPostRedisplay();
+}
+
+float initialX;
+float initialY;
+
+float getRelativeX(int x)  {
+	return (float)x / (WIN_W / 2) - 1.0;
+}
+float getRelativeY(int y) {
+	return (float)(WIN_H - y) / (WIN_H / 2) - 1.0;
+}
+void mouseCallback(int button, int state, int x, int y) {
+
+	printf("%lf %lf\n", globalRotateX, globalRotateY);
+	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
+
+		initialX = getRelativeX(x);
+		initialY = getRelativeY(y);	
+
+	}
+}
+
+void onMotion(int x, int y) {
+	globalRotateX = globalRotateX + (getRelativeY(y) - initialY) / 2 * 180;
+	globalRotateY = globalRotateY + (getRelativeX(x) - initialX) / 2 * 180;
+	if (globalRotateX >= 360.0) globalRotateX -= 360.0;
+	else if (globalRotateX < -360.0) globalRotateX += 360.0;
+	if (globalRotateY >= 360.0) globalRotateY -= 360.0;
+	else if (globalRotateY < -360.0) globalRotateY += 360.0;
+
+	initialX = getRelativeX(x);
+	initialY = getRelativeY(y);
+	glutPostRedisplay();
+	printf("%lf %lf\n", globalRotateX, globalRotateY);
 }
 
 int main(int argc, char **argv) {
@@ -241,6 +295,10 @@ int main(int argc, char **argv) {
 	glutAddMenuEntry("Phong", Phong);
 	glutAttachMenu(GLUT_RIGHT_BUTTON);
 
+
+	glutMouseFunc(mouseCallback);
+
+	glutMotionFunc(onMotion);
 
 	glewExperimental = GL_TRUE;
 

@@ -22,12 +22,13 @@ vec4 averageNormals[RESOLUTION + 1][RESOLUTION + 1];
 int normalIndexes[RESOLUTION + 1][RESOLUTION + 1];
 vec4 colors[NUM_VERTICES];
 int Index;
+int knobIndex;
 
 mat4 projectionMatrix;
 mat4 modelViewMatrix;
 
-double globalRotateX = 30.0;
-double globalRotateY = 20.0;
+double globalRotateX = 0.0;
+double globalRotateY = 0.0;
 double globalRotateZ = 0.0;
 
 
@@ -65,26 +66,5 @@ int fShadingType;
 GLuint programWireframe;
 GLuint programGouroud;
 GLuint programPhong;
-
-/*
-mat4 knobs[3] = {
-	mat4(
-	-0.9, -0.9, -0.9, -0.9,
-	-0.3, -0.3, -0.3, -0.3,
-	0.3, 0.3, 0.3, 0.3,
-	0.9, 0.9, 0.9, 0.9
-	),
-	mat4(
-	0.9, 0.6, -0.6, -0.9,
-	0.9, 0.6, -0.6, -0.9,
-	0.9, 0.6, -0.6, -0.9,
-	0.9, 0.6, -0.6, -0.9
-	),
-	mat4(
-	1.0, 0.0, 0.0, 0.0,
-	0.5, 0.0, 0.5, 0.0,
-	0.2, 0.0, 0.0, 0.0,
-	0.4, 0.0, 0.0, 0.0
-	)
-};
-*/
+GLuint activeProgram;
+GLuint vModelView;
