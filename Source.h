@@ -4,6 +4,7 @@
 #define WIN_W glutGet(GLUT_WINDOW_WIDTH)
 #define WIN_H glutGet(GLUT_WINDOW_HEIGHT)
 #define RESOLUTION 25
+#define DIFF 0.05
 
 enum Shading {
 	Wireframe = 0,
@@ -68,3 +69,5 @@ GLuint programGouroud;
 GLuint programPhong;
 GLuint activeProgram;
 GLuint vModelView;
+
+int activeKnob;

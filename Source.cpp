@@ -68,6 +68,7 @@ vec4 getNormalVector(vec4 v1, vec4 v2, vec4 v3) {
 }
 
 void writeSurfaceToBuffer(vec4 points[RESOLUTION+1][RESOLUTION+1]) {
+	Index = 0;
 	for (int i = 0; i < RESOLUTION; i++) {
 		for (int j = 0; j < RESOLUTION; j++) {
 			vertices[Index] = points[i][j]; Index++;
@@ -173,20 +174,27 @@ void writeKnobsToBuffer() {
 	knobIndex = Index;
 	for (int i = 0; i < 4; i++) {
 		for (int j = 0; j < 4; j++) {
-			vertices[knobIndex++] = vec4(knobs[0][i][j], knobs[2][i][j], knobs[2][i][j], 1.0);
+			vertices[knobIndex++] = vec4(knobs[0][i][j], knobs[1][i][j], knobs[2][i][j], 1.0);
 		}
 	}
 }
 
-void init() {
-	projectionMatrix = Ortho(-1.0, 1.0, -1.0, 1.0, -2.0, 2.0);
-
+void refreshKnobs() {
 
 	createPatchInDimension(knobs);
 
 	writeSurfaceToBuffer(points);
 
 	writeKnobsToBuffer();
+
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(vertices), sizeof(vNormals), vNormals);
+}
+
+void init() {
+	projectionMatrix = Ortho(-1.0, 1.0, -1.0, 1.0, -2.0, 2.0);
+
+
 
 	GLuint vao;
 	glGenVertexArrays(1, &vao);
@@ -196,8 +204,8 @@ void init() {
 	glGenBuffers(1, &buffer);
 	glBindBuffer(GL_ARRAY_BUFFER, buffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices) + sizeof(vNormals), NULL, GL_STATIC_DRAW);
-	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
-	glBufferSubData(GL_ARRAY_BUFFER, sizeof(vertices), sizeof(vNormals), vNormals);
+
+	refreshKnobs();
 
 	loadProgram(programGouroud, "vshaderG.glsl", "fshaderG.glsl");
 	loadProgram(programWireframe, "vshaderW.glsl", "fshaderW.glsl");
@@ -227,11 +235,15 @@ void display() {
 
 	glDrawArrays(gDrawArraysType, 0, Index);
 
-	/*
+	
 	if (shadingModel == Wireframe) {
 		glEnable(GL_PROGRAM_POINT_SIZE);
 		glDrawArrays(GL_POINTS, Index, knobIndex-Index);
-	}*/
+		GLuint selectedLoc = glGetUniformLocation(programWireframe, "selected");
+		glUniform1i(selectedLoc, 1);
+		glDrawArrays(GL_POINTS, Index + activeKnob, 1);
+		glUniform1i(selectedLoc, 0);
+	}
 
 	glutSwapBuffers();
 }
@@ -275,6 +287,38 @@ void onMotion(int x, int y) {
 	printf("%lf %lf\n", globalRotateX, globalRotateY);
 }
 
+void onKeyboard(unsigned char key, int x, int y) {
+	int i = activeKnob / 4;
+	int j = activeKnob % 4;
+	switch (key) {
+	case 'q':
+		knobs[2][i][j] += DIFF;
+		break;
+	case 'z':
+		knobs[2][i][j] -= DIFF;
+		break;
+	case 'w':
+		knobs[1][i][j] += DIFF;
+		break;
+	case 's':
+		knobs[1][i][j] -= DIFF;
+		break;
+	case 'a':
+		knobs[0][i][j] -= DIFF;
+		break;
+	case 'd':
+		knobs[0][i][j] += DIFF;
+		break;
+	case 9:
+		activeKnob++;
+		activeKnob %= 16;
+		break;
+	};
+	refreshKnobs();
+	glutPostRedisplay();
+
+}
+
 int main(int argc, char **argv) {
 	
 	glutInit(&argc, argv);
@@ -299,6 +343,8 @@ int main(int argc, char **argv) {
 	glutMouseFunc(mouseCallback);
 
 	glutMotionFunc(onMotion);
+
+	glutKeyboardFunc(onKeyboard);
 
 	glewExperimental = GL_TRUE;
 
