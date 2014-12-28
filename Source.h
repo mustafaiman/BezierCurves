@@ -28,6 +28,8 @@ int knobIndex;
 mat4 projectionMatrix;
 mat4 modelViewMatrix;
 
+vec3 zoomVector(1.0, 1.0, 1.0);
+
 double globalRotateX = 0.0;
 double globalRotateY = 0.0;
 double globalRotateZ = 0.0;
