@@ -162,11 +162,10 @@ void loadProgram(GLuint &program, const char *vertexshader, const char *fragment
 
 	GLuint vLightSpecular = glGetUniformLocation(program, "vLightSpecular");
 	glUniform4fv(vLightSpecular, 1, light_specular);
-	glGetUniformfv(program, vLightDiffuse, light_ambient);
-	debugVector(light_ambient);
 
 	GLuint vLightPosition = glGetUniformLocation(program, "vLightPosition");
 	glUniform4fv(vLightPosition, 1, light_position);
+
 
 }
 

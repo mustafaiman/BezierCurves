@@ -20,7 +20,6 @@ void main()
 	vec3 EE = normalize(E);
 
 	vec4 ambient, diffuse, specular;
-	ambient = vLightAmbient;
 	vec3 H = normalize(LL+EE);
 	float Kd = max(dot(LL,NN),0.0);
 	Kd = dot(LL,NN);
@@ -31,6 +30,7 @@ void main()
 	else specular = Ks * vLightSpecular;
 
 	//No fragment processing simply output the interpolated vertex color.
+	ambient = vLightAmbient;
 	fColor = ambient + diffuse + specular;
 	fColor.w = 1.0;
 
