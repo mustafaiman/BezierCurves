@@ -150,7 +150,7 @@ void loadProgram(GLuint &program, const char *vertexshader, const char *fragment
 	glVertexAttribPointer(vNormal, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(vertices)));
 
 	GLuint vProjection = glGetUniformLocation(program, "vProjection");
-	glUniformMatrix4fv(vProjection, 1, false, projectionMatrix);
+	glUniformMatrix4fv(vProjection, 1, GL_TRUE, projectionMatrix);
 
 
 
@@ -191,7 +191,10 @@ void refreshKnobs() {
 }
 
 void init() {
-	projectionMatrix = Ortho(-1.0, 1.0, -1.0, 1.0, -2.0, 2.0);
+
+	glEnable(GL_DEPTH_TEST);
+	//projectionMatrix = Ortho(-1.0, 1.0, -1.0, 1.0, -2.0, 2.0);
+	projectionMatrix = Perspective(45.0, 1.0, 1.0, 20.0);
 
 
 
@@ -213,7 +216,7 @@ void init() {
 
 	
 	glClearColor(1.0, 0.0, 1.0, 1.0);
-	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	glPolygonMode(GL_FRONT, GL_FILL);
 
 	setShading(Wireframe);
 
@@ -225,8 +228,8 @@ void display() {
 
 
 	vModelView = glGetUniformLocation(activeProgram, "vModelView");
-	modelViewMatrix = Scale(zoomVector) * RotateX(globalRotateX)*RotateY(globalRotateY);
-	glUniformMatrix4fv(vModelView, 1, false, modelViewMatrix);
+	modelViewMatrix = Translate(0.0, 0.0, -5.0) *Scale(zoomVector) * RotateX(globalRotateX)*RotateY(globalRotateY);
+	glUniformMatrix4fv(vModelView, 1, GL_TRUE, modelViewMatrix);
 
 	glClearColor(1.0, 1.0, 1.0, 1.0);
 
@@ -263,7 +266,6 @@ float getRelativeY(int y) {
 }
 void mouseCallback(int button, int state, int x, int y) {
 
-	printf("%lf %lf\n", globalRotateX, globalRotateY);
 	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
 
 		initialX = getRelativeX(x);

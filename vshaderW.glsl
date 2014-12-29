@@ -8,7 +8,7 @@ void main()
 {
 
 	gl_PointSize = 4.0;
-	gl_Position = vProjection*vModelView*vPosition;
+	gl_Position = vProjection*vModelView*vPosition/vPosition.w;
 
 	if(selected == 1) color = vec4(1.0, 0.0, 0.0, 1.0);
 	else color = vec4(0.0, 0.0, 0.0, 1.0);

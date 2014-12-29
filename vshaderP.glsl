@@ -11,7 +11,7 @@ void main()
 {
 
 	gl_Position = vProjection*vModelView*vPosition;
-	N = vNormal.xyz;
+	N = (vModelView*vNormal).xyz;
 	L = vLightPosition.xyz - (vModelView*vPosition).xyz;
 	if (vLightPosition.w == 0.0) L = vLightPosition.xyz;
 	E = (vModelView*vPosition).xyz;
