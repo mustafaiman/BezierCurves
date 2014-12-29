@@ -230,7 +230,7 @@ void display() {
 
 
 	vModelView = glGetUniformLocation(activeProgram, "vModelView");
-	modelViewMatrix = Translate(0.0, 0.0, -5.0) *Scale(zoomVector) * RotateX(globalRotateX)*RotateY(globalRotateY);
+	modelViewMatrix = Translate(0.0, 0.0, yDist) *Scale(zoomVector) * RotateX(globalRotateX)*RotateY(globalRotateY);
 	glUniformMatrix4fv(vModelView, 1, GL_TRUE, modelViewMatrix);
 
 	glClearColor(1.0, 1.0, 1.0, 1.0);
@@ -275,10 +275,10 @@ void mouseCallback(int button, int state, int x, int y) {
 
 	}
 	else if (button == 3) {
-		zoomVector += vec3(0.02, 0.02, 0.02);
+		yDist += 0.1;
 	}
 	else if (button == 4) {
-		zoomVector -= vec3(0.02, 0.02, 0.02);
+		yDist -= 0.1;
 	}
 
 	glutPostRedisplay();

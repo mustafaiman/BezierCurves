@@ -71,5 +71,8 @@ GLuint programGouroud;
 GLuint programPhong;
 GLuint activeProgram;
 GLuint vModelView;
+GLuint vProjection;
+
+float yDist = -5.0;
 
 int activeKnob;
