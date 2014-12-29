@@ -275,18 +275,28 @@ void display() {
 	
 	if (shadingModel == Wireframe) {
 		glEnable(GL_PROGRAM_POINT_SIZE);
-		glDrawArrays(GL_POINTS, Index, knobIndex-Index);
+		glDrawArrays(GL_POINTS, Index, activeKnob);
 		GLuint selectedLoc = glGetUniformLocation(programWireframe, "selected");
 		glUniform1i(selectedLoc, 1);
 		glDrawArrays(GL_POINTS, Index + activeKnob, 1);
 		glUniform1i(selectedLoc, 0);
+		glDrawArrays(GL_POINTS, Index + activeKnob + 1, knobIndex - activeKnob - 1);
 	}
 
 	glutSwapBuffers();
 }
 
 void rightClickMenu(int id) {
-	setShading(id);
+	if (id == 10) {
+		isTextureMappingOn = 1 - isTextureMappingOn;
+
+	}
+	else {
+		setShading(id);	
+	}
+	GLuint tex_loc;
+	tex_loc = glGetUniformLocation(activeProgram, "isTextureMappingOn");
+	glUniform1i(tex_loc, isTextureMappingOn);
 	glutPostRedisplay();
 }
 
@@ -328,7 +338,6 @@ void onMotion(int x, int y) {
 	initialX = getRelativeX(x);
 	initialY = getRelativeY(y);
 	glutPostRedisplay();
-	printf("%lf %lf\n", globalRotateX, globalRotateY);
 }
 
 void onKeyboard(unsigned char key, int x, int y) {
@@ -381,6 +390,7 @@ int main(int argc, char **argv) {
 	glutAddMenuEntry("Wireframe", Wireframe);
 	glutAddMenuEntry("Gouroud", Gouroud);
 	glutAddMenuEntry("Phong", Phong);
+	glutAddMenuEntry("Toggle Texture Mapping", 10);
 	glutAttachMenu(GLUT_RIGHT_BUTTON);
 
 

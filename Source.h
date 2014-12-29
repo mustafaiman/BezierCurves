@@ -77,6 +77,7 @@ GLuint mytex[1];
 GLubyte my_texels[512][512][4];
 GLfloat tex_coord[NUM_VERTICES][2];
 
+int isTextureMappingOn;
 float yDist = -5.0;
 
 

@@ -17,6 +17,7 @@ void main()
 	L = vLightPosition.xyz - (vModelView*vPosition).xyz;
 	if (vLightPosition.w == 0.0) L = vLightPosition.xyz;
 	E = -(vModelView*vPosition).xyz;
-
 	st=texcoord;
+
+
 }
