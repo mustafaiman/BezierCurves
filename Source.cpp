@@ -27,6 +27,45 @@ void writeToBuffer(vec4 &pp) {
 	vertices[Index++] = pp;
 }
 
+GLuint loadBMP_custom(const char * imagepath) {
+	FILE * file = fopen(imagepath, "rb");
+	if (!file) { printf("Image could not be opened\n"); return 0; }
+	if (fread(header, 1, 54, file) != 54){ // If not 54 bytes read : problem
+		printf("Not a correct BMP file\n");
+		return false;
+	}
+	if (header[0] != 'B' || header[1] != 'M'){
+		printf("Not a correct BMP file\n");
+		return 0;
+	}
+	dataPos = *(int*)&(header[0x0A]);
+	imageSize = *(int*)&(header[0x22]);
+	width = *(int*)&(header[0x12]);
+	height = *(int*)&(header[0x16]);
+	// Some BMP files are misformatted, guess missing information
+	if (imageSize == 0)    imageSize = width*height * 3; // 3 : one byte for each Red, Green and Blue component
+	if (dataPos == 0)      dataPos = 54; // The BMP header is done that way
+
+	// Create a buffer
+	data = new unsigned char[imageSize];
+
+	// Read the actual data from the file into the buffer
+	fread(data, 1, imageSize, file);
+
+	int aaa = 0;
+	for (int i = 0; i < 512; i++) {
+		for (int j = 0; j < 512; j++) {
+			my_texels[i][j][0] = data[aaa]; aaa++ ;
+			my_texels[i][j][1] = data[aaa]; aaa++;
+			my_texels[i][j][2] = data[aaa]; aaa++;
+			//Sprintf("%c %c %c %c\n", my_texels[i][j][0], my_texels[i][j][1], my_texels[i][j][2], my_texels[i][j][3]);
+		}
+	}
+
+
+	//Everything is in memory now, the file can be closed
+	fclose(file);
+}
 double bernstein(int k, double u) {
 	if (k == 0) {
 		return (1 - u) * (1 - u) * (1 - u);
@@ -68,14 +107,18 @@ vec4 getNormalVector(vec4 v1, vec4 v2, vec4 v3) {
 	nn[3] = 0;
 	return nn;
 }
+void assignCoord(int vindex, int i, int j) {
+	tex_coord[vindex][0] = (float)j / RESOLUTION;
+	tex_coord[vindex][1] = (float)i / RESOLUTION;
+}
 
 void writeSurfaceToBuffer(vec4 points[RESOLUTION+1][RESOLUTION+1]) {
 	Index = 0;
 	for (int i = 0; i < RESOLUTION; i++) {
 		for (int j = 0; j < RESOLUTION; j++) {
-			vertices[Index] = points[i][j]; tex_coord[Index][0] = 0.0; tex_coord[Index][1] = 0.0; Index++;
-			vertices[Index] = points[i + 1][j]; tex_coord[Index][0] = 0.0; tex_coord[Index][1] = 1.0; Index++;
-			vertices[Index] = points[i][j + 1]; tex_coord[Index][0] = 1.0; tex_coord[Index][1] = 0.0; Index++;
+			vertices[Index] = points[i][j]; assignCoord(Index,i,j); Index++;
+			vertices[Index] = points[i + 1][j]; assignCoord(Index, i+1, j); Index++;
+			vertices[Index] = points[i][j + 1]; assignCoord(Index, i, j+1); Index++;
 			
 			
 			vec4 normal1 = getNormalVector(vertices[Index-3],vertices[Index-2],vertices[Index-1]);
@@ -84,9 +127,9 @@ void writeSurfaceToBuffer(vec4 points[RESOLUTION+1][RESOLUTION+1]) {
 			normals[i][j+1][normalIndexes[i][j+1]++] = normal1;
 
 
-			vertices[Index] = points[i][j + 1]; tex_coord[Index][0] = 1.0; tex_coord[Index][1] = 0.0; Index++;
-			vertices[Index] = points[i + 1][j]; tex_coord[Index][0] = 0.0; tex_coord[Index][1] = 1.0; Index++;
-			vertices[Index] = points[i + 1][j + 1]; tex_coord[Index][0] = 1.0; tex_coord[Index][1] = 1.0; Index++;
+			vertices[Index] = points[i][j + 1]; assignCoord(Index, i, j+1); Index++;
+			vertices[Index] = points[i + 1][j]; assignCoord(Index, i+1, j); Index++;
+			vertices[Index] = points[i + 1][j + 1];  assignCoord(Index, i+1, j+1); Index++;
 
 			vec4 normal2 = getNormalVector(vertices[Index - 3], vertices[Index - 2], vertices[Index - 1]);
 			normals[i][j+1][normalIndexes[i][j+1]++] = normal2;
@@ -175,7 +218,7 @@ void loadProgram(GLuint &program, const char *vertexshader, const char *fragment
 
 	glGenTextures(1, mytex);
 	glBindTexture(GL_TEXTURE_2D, mytex[0]);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 512, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, my_texels);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 512, 512, 0, GL_RGB, GL_UNSIGNED_BYTE, my_texels);
 
 
 	GLuint tex_loc;
@@ -218,15 +261,8 @@ void init() {
 	//projectionMatrix = Ortho(-1.0, 1.0, -1.0, 1.0, -2.0, 2.0);
 	projectionMatrix = Perspective(45.0, 1.0, 1.0, 20.0);
 
-	for (int i = 0; i < 512; i++) {
-		for (int j = 0; j < 512; j++) {
-			my_texels[i][j][0] = i%256;
-			my_texels[i][j][1] = j % 256;
-			my_texels[i][j][2] = j % 256;
-			my_texels[i][j][3] = 255;
-			//Sprintf("%c %c %c %c\n", my_texels[i][j][0], my_texels[i][j][1], my_texels[i][j][2], my_texels[i][j][3]);
-		}
-	}
+
+	loadBMP_custom("texture.bmp");
 
 
 	GLuint vao;
@@ -384,7 +420,7 @@ int main(int argc, char **argv) {
 
 	glutInitContextProfile(GLUT_CORE_PROFILE);
 
-	glutCreateWindow("Test Window");
+	glutCreateWindow("Bezier Curve");
 
 	glutCreateMenu(rightClickMenu);
 	glutAddMenuEntry("Wireframe", Wireframe);
