@@ -64,7 +64,9 @@ void createPatchInDimension(mat4 knobs[]) {
 }
 
 vec4 getNormalVector(vec4 v1, vec4 v2, vec4 v3) {
-	return normalize(cross(v3 - v2, v2 - v1));
+	vec4 nn = normalize(cross(v3 - v2, v2 - v1));
+	nn[3] = 0;
+	return nn;
 }
 
 void writeSurfaceToBuffer(vec4 points[RESOLUTION+1][RESOLUTION+1]) {

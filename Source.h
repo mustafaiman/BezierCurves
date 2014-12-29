@@ -35,11 +35,11 @@ double globalRotateY = 0.0;
 double globalRotateZ = 0.0;
 
 
-vec4 light_ambient(0.02, 0.02, 0.02, 1.0);
+vec4 light_ambient(0.12, 0.12, 0.12, 1.0);
 vec4 light_specular(1.0, 1.0, 1.0, 1.0);
 vec4 light_diffuse(0.23, 0.23, 0.23, 1.0);
 
-vec4 light_position(0.0, 5.0, 0.0, 1.0);
+vec4 light_position(0.0, 5.0, 2.0, 1.0);
 
 mat4 knobs[3] = {
 	mat4(
