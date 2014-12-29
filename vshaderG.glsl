@@ -1,6 +1,7 @@
 #version 150
 in vec4 vPosition;
 in vec4 vNormal;
+in vec2 texcoord;
 uniform vec4 vLightAmbient;
 uniform vec4 vLightDiffuse;
 uniform vec4 vLightSpecular;
@@ -10,6 +11,7 @@ uniform mat4 vModelView;
 out vec3 N;
 out vec3 L;
 out vec3 E;
+out vec2 st;
 out vec4 color;
 void main() 
 {
@@ -40,10 +42,9 @@ void main()
 	if( dot(L, N) < 0.0 ) {
 		specular = vec4(0.0, 0.0, 0.0, 1.0);
 	}
-
+	st = texcoord;
 	color = ambient + diffuse + specular;
 	color.a = 1.0;
-
 
 
 }

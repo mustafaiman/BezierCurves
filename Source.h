@@ -73,6 +73,11 @@ GLuint activeProgram;
 GLuint vModelView;
 GLuint vProjection;
 
+GLuint mytex[1];
+GLubyte my_texels[512][512][4];
+GLfloat tex_coord[NUM_VERTICES][2];
+
 float yDist = -5.0;
+
 
 int activeKnob;

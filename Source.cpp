@@ -73,9 +73,10 @@ void writeSurfaceToBuffer(vec4 points[RESOLUTION+1][RESOLUTION+1]) {
 	Index = 0;
 	for (int i = 0; i < RESOLUTION; i++) {
 		for (int j = 0; j < RESOLUTION; j++) {
-			vertices[Index] = points[i][j]; Index++;
-			vertices[Index] = points[i+1][j]; Index++;
-			vertices[Index] = points[i][j+1]; Index++;
+			vertices[Index] = points[i][j]; tex_coord[Index][0] = 0.0; tex_coord[Index][1] = 0.0; Index++;
+			vertices[Index] = points[i + 1][j]; tex_coord[Index][0] = 0.0; tex_coord[Index][1] = 1.0; Index++;
+			vertices[Index] = points[i][j + 1]; tex_coord[Index][0] = 1.0; tex_coord[Index][1] = 0.0; Index++;
+			
 			
 			vec4 normal1 = getNormalVector(vertices[Index-3],vertices[Index-2],vertices[Index-1]);
 			normals[i][j][normalIndexes[i][j]++] = normal1;
@@ -83,9 +84,9 @@ void writeSurfaceToBuffer(vec4 points[RESOLUTION+1][RESOLUTION+1]) {
 			normals[i][j+1][normalIndexes[i][j+1]++] = normal1;
 
 
-			vertices[Index] = points[i][j+1]; Index++;
-			vertices[Index] = points[i+1][j]; Index++;
-			vertices[Index] = points[i+1][j+1]; Index++;
+			vertices[Index] = points[i][j + 1]; tex_coord[Index][0] = 1.0; tex_coord[Index][1] = 0.0; Index++;
+			vertices[Index] = points[i + 1][j]; tex_coord[Index][0] = 0.0; tex_coord[Index][1] = 1.0; Index++;
+			vertices[Index] = points[i + 1][j + 1]; tex_coord[Index][0] = 1.0; tex_coord[Index][1] = 1.0; Index++;
 
 			vec4 normal2 = getNormalVector(vertices[Index - 3], vertices[Index - 2], vertices[Index - 1]);
 			normals[i][j+1][normalIndexes[i][j+1]++] = normal2;
@@ -151,6 +152,10 @@ void loadProgram(GLuint &program, const char *vertexshader, const char *fragment
 	glEnableVertexAttribArray(vNormal);
 	glVertexAttribPointer(vNormal, 4, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(vertices)));
 
+	GLuint texloc = glGetAttribLocation(program, "texcoord");
+	glEnableVertexAttribArray(texloc);
+	glVertexAttribPointer(texloc, 2, GL_FLOAT, GL_FALSE, 0, BUFFER_OFFSET(sizeof(vertices) + sizeof(vNormals)));
+
 	GLuint vProjection = glGetUniformLocation(program, "vProjection");
 	glUniformMatrix4fv(vProjection, 1, GL_TRUE, projectionMatrix);
 
@@ -167,6 +172,20 @@ void loadProgram(GLuint &program, const char *vertexshader, const char *fragment
 
 	GLuint vLightPosition = glGetUniformLocation(program, "vLightPosition");
 	glUniform4fv(vLightPosition, 1, light_position);
+
+	glGenTextures(1, mytex);
+	glBindTexture(GL_TEXTURE_2D, mytex[0]);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 512, 512, 0, GL_RGBA, GL_UNSIGNED_BYTE, my_texels);
+
+
+	GLuint tex_loc;
+	tex_loc = glGetUniformLocation(activeProgram, "texMap");
+	glUniform1i(tex_loc, 0);
+
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 
 
 }
@@ -190,6 +209,7 @@ void refreshKnobs() {
 
 	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertices), vertices);
 	glBufferSubData(GL_ARRAY_BUFFER, sizeof(vertices), sizeof(vNormals), vNormals);
+	glBufferSubData(GL_ARRAY_BUFFER, sizeof(vertices) + sizeof(vNormals), sizeof(tex_coord), tex_coord);
 }
 
 void init() {
@@ -198,6 +218,15 @@ void init() {
 	//projectionMatrix = Ortho(-1.0, 1.0, -1.0, 1.0, -2.0, 2.0);
 	projectionMatrix = Perspective(45.0, 1.0, 1.0, 20.0);
 
+	for (int i = 0; i < 512; i++) {
+		for (int j = 0; j < 512; j++) {
+			my_texels[i][j][0] = i%256;
+			my_texels[i][j][1] = j % 256;
+			my_texels[i][j][2] = j % 256;
+			my_texels[i][j][3] = 255;
+			//Sprintf("%c %c %c %c\n", my_texels[i][j][0], my_texels[i][j][1], my_texels[i][j][2], my_texels[i][j][3]);
+		}
+	}
 
 
 	GLuint vao;
@@ -207,9 +236,13 @@ void init() {
 	GLuint buffer;
 	glGenBuffers(1, &buffer);
 	glBindBuffer(GL_ARRAY_BUFFER, buffer);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices) + sizeof(vNormals), NULL, GL_STATIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices) + sizeof(vNormals) + sizeof(tex_coord), NULL, GL_STATIC_DRAW);
+
+
 
 	refreshKnobs();
+
+
 
 	loadProgram(programGouroud, "vshaderG.glsl", "fshaderG.glsl");
 	loadProgram(programWireframe, "vshaderW.glsl", "fshaderW.glsl");
