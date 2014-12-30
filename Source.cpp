@@ -383,19 +383,37 @@ void onKeyboard(unsigned char key, int x, int y) {
 	case 'q':
 		knobs[2][i][j] += DIFF;
 		break;
+	case 'Q':
+		knobs[2][i][j] += DIFF;
+		break;
 	case 'z':
+		knobs[2][i][j] -= DIFF;
+		break;
+	case 'Z':
 		knobs[2][i][j] -= DIFF;
 		break;
 	case 'w':
 		knobs[1][i][j] += DIFF;
 		break;
+	case 'W':
+		knobs[1][i][j] += DIFF;
+		break;
 	case 's':
+		knobs[1][i][j] -= DIFF;
+		break;
+	case 'S':
 		knobs[1][i][j] -= DIFF;
 		break;
 	case 'a':
 		knobs[0][i][j] -= DIFF;
 		break;
+	case 'A':
+		knobs[0][i][j] -= DIFF;
+		break;
 	case 'd':
+		knobs[0][i][j] += DIFF;
+		break;
+	case 'D':
 		knobs[0][i][j] += DIFF;
 		break;
 	case 9:
